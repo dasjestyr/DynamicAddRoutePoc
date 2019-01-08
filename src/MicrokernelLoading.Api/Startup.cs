@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Internal;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -25,6 +28,8 @@ namespace MicrokernelLoading.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IControllerFactory, DynamicControllerActivator>();
+            services.AddSingleton<ControllerRegistry>();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 
@@ -41,8 +46,25 @@ namespace MicrokernelLoading.Api
                 app.UseHsts();
             }
 
+
             app.UseHttpsRedirection();
+            app.UseRouter(new MyRouter());
             app.UseMvc();
+        }
+
+        public class MyRouter : IRouter
+        {
+            public Task RouteAsync(RouteContext context)
+            {
+                context.RouteData.DataTokens["controller"] = "Default";
+                context.RouteData.DataTokens["action"] = "Get";
+                return Task.CompletedTask;
+            }
+
+            public VirtualPathData GetVirtualPath(VirtualPathContext context)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }
